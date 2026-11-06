@@ -1,0 +1,6 @@
+idf_component_register(
+    SRCS "light_driver.c"
+    INCLUDE_DIRS "include"
+    REQUIRES iot_driver
+    PRIV_REQUIRES freertos
+)
