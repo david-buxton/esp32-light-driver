@@ -26,9 +26,34 @@ static const char *TAG = "light_driver";
 //static rgb_colour user_colour = {0, 0, 255}; //blue
 //static rgb_colour user_colour = {255, 0, 0}; //red
 //static rgb_colour user_colour = {0, 255, 0}; // Green
-static rgb_colour user_colour = {255, 0, 128}; // purple
+//static rgb_colour user_colour = {255, 0, 128}; // purple
 
-static bool light_is_on = false;
+
+
+
+//group user_colour and light_is_on into one private light_state_t
+
+typedef struct {        //declare
+    rgb_colour user_colour;
+    bool light_is_on;
+} light_state_t;
+
+static light_state_t light_state = {    //now instance
+    .user_colour = {255, 0, 128},
+    .light_is_on = false,
+};
+
+
+
+
+
+/*
+
+Then run the boot test to verify that selecting a colour while off keeps the LED dark,
+changing it while on takes effect immediately, and switching back on
+restores it.
+
+*/
 
 esp_err_t light_driver_init(light_driver_config_t *config) {
 
@@ -69,11 +94,14 @@ esp_err_t light_driver_set_rgb(uint8_t new_red, uint8_t new_green, uint8_t new_b
     {
 
     //need to update the program user colours to the new ones chosen by the user ie this method is just an updater
-    user_colour.red_value = new_red;
-    user_colour.green_value = new_green;
-    user_colour.blue_value = new_blue;
 
-    if (light_is_on) {
+    light_state.user_colour.red_value = new_red;
+    light_state.user_colour.green_value = new_green;
+    light_state.user_colour.blue_value = new_blue;
+
+
+
+    if (light_state.light_is_on) {
       return light_driver_set_switch(true);
     }
 
@@ -100,9 +128,9 @@ esp_err_t light_driver_set_switch(bool on)
         break;
 
     case true:
-        channel_1_rgb = user_colour.red_value;
-        channel_2_rgb = user_colour.green_value;
-        channel_3_rgb = user_colour.blue_value;
+        channel_1_rgb = light_state.user_colour.red_value;
+        channel_2_rgb = light_state.user_colour.green_value;
+        channel_3_rgb = light_state.user_colour.blue_value;
         break;
     }
 
@@ -127,7 +155,7 @@ esp_err_t light_driver_set_switch(bool on)
     }
 
 
-    light_is_on = on; //now we can use method which updates colour while running
+    light_state.light_is_on = on; //now we can use method which updates colour while running
 
     return ESP_OK;
 }
