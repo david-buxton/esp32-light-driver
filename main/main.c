@@ -1,3 +1,6 @@
+
+//main.c
+
 /*
 Macro	Level
 ESP_LOGE()	Error
@@ -34,20 +37,29 @@ static esp_err_t app_driver_init(void)
     ESP_ERROR_CHECK(light_driver_init(&driver_config)); //using the next layer down API
     //light_driver_set_switch(true);
 
+    //light_driver_set_switch(true);
+    //vTaskDelay(pdMS_TO_TICKS(2000));
 
+    //light_driver_set_switch(false);
+    //vTaskDelay(pdMS_TO_TICKS(2000));
 
-    light_driver_set_switch(true);
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    //light_driver_set_switch(true);
 
-    light_driver_set_switch(false);
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    //ESP_LOGI(TAG, "Light ON");
 
-    light_driver_set_switch(true);
+    ESP_ERROR_CHECK(light_driver_set_rgb(0, 255, 0));
+    vTaskDelay(pdMS_TO_TICKS(2000));  // Still dark
 
+    ESP_ERROR_CHECK(light_driver_set_switch(true));
+    vTaskDelay(pdMS_TO_TICKS(2000));  // Green
 
+    ESP_ERROR_CHECK(light_driver_set_rgb(255, 0, 128));
+    vTaskDelay(pdMS_TO_TICKS(2000));  // Purple
 
+    ESP_ERROR_CHECK(light_driver_set_switch(false));
+    vTaskDelay(pdMS_TO_TICKS(2000));  // Dark
 
-    ESP_LOGI(TAG, "Light ON");
+    ESP_ERROR_CHECK(light_driver_set_switch(true));  // Purple again
 
     return ESP_OK;
 

@@ -1,4 +1,5 @@
 
+//my_esp32_board.h
 
 //issue to do for all files but left for now - All driver functions	Return ESP_OK without checking whether ESP-IDF calls succeeded
 
@@ -30,18 +31,7 @@ if (ret != ESP_OK) {
 The return value of that functions gets passed back to the caller to deal with.
 Higher layers can then decide whether to log the error, retry or abort.
 
-
-
-
-
 */
-
-
-
-
-
-
-
 
 #ifndef MY_ESP32_BOARD_H
 #define MY_ESP32_BOARD_H
@@ -52,10 +42,15 @@ extern "C" {
 
 //Light driver Macro
 
-#define LIGHT_GPIO_RED          2 //Just use the internal LED for now
-#define LIGHT_GPIO_GREEN        4 // Need to buy
-#define LIGHT_GPIO_BLUE         5 // Need to buy
+#define LIGHT_GPIO_RED          21  //see board pinout (GPIO 2 = internal LED)
+#define LIGHT_GPIO_GREEN        19 //see board pinout
+#define LIGHT_GPIO_BLUE         18 //see board pinout
 #define LIGHT_FREQ_HZ           5000    /**specify the PWM frequency for the shared timer */
+
+
+
+
+
 
 #ifdef __cplusplus
 }

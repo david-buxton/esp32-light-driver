@@ -1,4 +1,6 @@
 
+//iot_driver.c
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -54,6 +56,7 @@ esp_err_t iot_led_regist_channel(ledc_channel_t channel,
         .channel    = channel,
         .speed_mode = speed_mode,     //was: g_light_config->speed_mode,
         .timer_sel  = timer_num,      //was: g_light_config->timer_num,
+        .flags.output_invert = 0,
     };
 
     return ledc_channel_config(&ledc_ch_config);
@@ -61,37 +64,25 @@ esp_err_t iot_led_regist_channel(ledc_channel_t channel,
 }
 
 
-
-
-
-
 esp_err_t iot_led_set_channel(
     ledc_mode_t speed_mode,
     ledc_channel_t channel,
-    uint32_t duty)
+    uint8_t rgb_colour)
 
+    //SO I THINK i will change iot_led_set_channel to it has rgb value in the arg not duty, the conversion to duty will then happen in the function body
+    //At this point we have converted RGB to duty ready to pass to LEDC
+    //before calling check they’re each in 0–255 then. One thing to watch for with user input. If you convert 256 to uint8_t, it wraps to 0. Read the input into an int and check that it’s in range before storing it
+    //if duty is zero it does not get comnverted
 
-    /*
-    This is called for a channel whenever the brightness of a channel needs to change eg at switch on
+    {
 
-    With your 11-bit resolution, 1024 represents approximately 50% duty cycle.
-    ie 2^11 = 2048
+    uint32_t duty = ((uint32_t)rgb_colour * 2047u + 127u) / 255u;  //notice we use uint32_t widening here
 
-    0 → 0% duty (OFF)
-    1024 → 50% duty
-    2048 → 100% duty (theoretical maximum)
-    Important caveat: On the ESP32, setting duty to 2048 with the maximum supported duty resolution for a
-    timer can cause a hardware overflow. The usual safe range is 0 to 2047, and you can use 2047 as effectively 100% brightness in your driver.
-
-    */
-
-    //When changing an LEDC channel's duty cycle, you normally need both functions.
-{
     esp_err_t ret = ledc_set_duty(speed_mode, channel, duty);
 
     if (ret != ESP_OK) {
         return ret;
     }
 
-    return ledc_update_duty(speed_mode, channel);
-}
+        return ledc_update_duty(speed_mode, channel);
+    }
