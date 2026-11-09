@@ -1,5 +1,4 @@
 
-
 //light_driver.h
 
 #ifndef LIGHT_DRIVER_H
@@ -21,11 +20,6 @@ typedef struct {  //user defined colour, 8-bit RGB values (0–255)
 
 //rgb_colour user_colour =  {0 ,0, 255};  //red. //causes a compilation error if defined here here, put in light_driver.c instead
 
-
-
-
-
-
 typedef struct {  //Light driver init arg type
     gpio_num_t gpio_red;      /**< Red corresponds to GPIO */
     gpio_num_t gpio_green;    /**< Green corresponds to GPIO */
@@ -37,8 +31,7 @@ typedef struct {  //Light driver init arg type
 
 esp_err_t light_driver_init(light_driver_config_t *config);
 esp_err_t light_driver_set_switch(bool light_status); //	Turn light on/off
-
-esp_err_t light_driver_set_rgb(uint8_t new_red, uint8_t new_green, uint8_t new_blue);
+esp_err_t light_driver_update_rgb(uint8_t new_red, uint8_t new_green, uint8_t new_blue); //use this to change light colour when program is running and save new values to flash
 
 
 #ifdef __cplusplus
