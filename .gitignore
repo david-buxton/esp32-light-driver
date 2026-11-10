@@ -4,3 +4,9 @@ sdkconfig.old
 managed_components/
 dependencies.lock
 *.png
+
+/Commit plan.docx
+
+/my light driver notes.md
+
+/my light driver commit plan.docx

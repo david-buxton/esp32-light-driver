@@ -57,7 +57,7 @@ esp_err_t iot_led_set_channel(
 
     {
 
-    uint32_t duty = ((uint32_t)rgb_colour * 2047u + 127u) / 255u;  //notice we use uint32_t widening here
+    uint32_t duty = ((uint32_t)rgb_colour * 2047u + 127u) / 255u;  //we use uint32_t widening here, adding half the divisor before the actual division makes the result round to the nearest whole duty instead of always rounding down.
 
     esp_err_t ret = ledc_set_duty(speed_mode, channel, duty);
 

@@ -12,10 +12,9 @@
 #include "light_driver.h"
 #include <stdint.h>
 
-#include "nvs.h" //for nvs_open(), nvs_get_u32(), nvs_set_u32() and nvs_commit()
+#include "nvs.h"
 
-//channel layout of 3 colour led light
-enum light_channel {
+enum light_channel {  //channel layout of 3 colour led light
     CHANNEL_ID_RED = 0,
     CHANNEL_ID_GREEN,
     CHANNEL_ID_BLUE,
@@ -23,35 +22,22 @@ enum light_channel {
 
 static const char *TAG = "light_driver";
 
-//group the user_colour and light_is_on into one private light_state_t
-
-typedef struct {        //declare
+typedef struct {
     rgb_colour user_colour;
     bool light_is_on;
 } light_state_t;
 
-static light_state_t light_state = {    //now instance
+static light_state_t light_state = {
     .user_colour = {255, 0, 128}, // purple
-    //.user_colour = {255, 0, 0}, // red.
-    //.user_colour = {0, 255, 0}, // green.
-    //.user_colour = {0, 0, 255}, // blue
-
     .light_is_on = false,
 };
-
-
-
-
-
-
-
 
 static esp_err_t load_rgb(void)
 {
     nvs_handle_t handle;
     esp_err_t err = nvs_open("light", NVS_READONLY, &handle);
     if (err == ESP_ERR_NVS_NOT_FOUND) {
-        return ESP_OK;  // First boot: keep default colour
+        return ESP_OK;
     }
     if (err != ESP_OK) {
         return err;
@@ -62,29 +48,24 @@ static esp_err_t load_rgb(void)
     nvs_close(handle);
 
     if (err == ESP_ERR_NVS_NOT_FOUND) {
-        return ESP_OK;  // Namespace exists, but no colour has been saved
+        return ESP_OK;
     }
     if (err != ESP_OK) {
         return err;
     }
 
-    light_state.user_colour.red_value   = (uint8_t)((packed_rgb >> 24) & 0xFFu); //packed_rgb >> 24 shifts red three bytes to the right. For purple, FF 00 80 00 becomes 00 00 00 FF
-    light_state.user_colour.green_value = (uint8_t)((packed_rgb >> 16) & 0xFFu);  //& 0xFFu keeps only the rightmost eight bits. For red, the shift has already cleared the other bytes. The mask is useful for green and blue because bytes can still be sitting to their left.
-    light_state.user_colour.blue_value  = (uint8_t)((packed_rgb >>  8) & 0xFFu);  //(uint8_t) converts the result to the one-byte type your colour field uses. Here, that’s 255.
+    light_state.user_colour.red_value   = (uint8_t)((packed_rgb >> 24) & 0xFFu);
+    light_state.user_colour.green_value = (uint8_t)((packed_rgb >> 16) & 0xFFu);
+    light_state.user_colour.blue_value  = (uint8_t)((packed_rgb >>  8) & 0xFFu);
+
+    /*
+    packed_rgb >> 24 shifts red three bytes to the right. For purple, FF 00 80 00 becomes 00 00 00 FF
+    & 0xFFu keeps only the rightmost eight bits. For red, the shift has already cleared the other bytes. The mask is useful for green and blue because bytes can still be sitting to their left.
+    uint8_t) converts the result to the one-byte type your colour field uses. Here, that’s 255.
+    */
 
     return ESP_OK;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 static esp_err_t save_rgb(uint32_t packed_rgb)  //Packed means putting three separate RGB values into one integer. Each colour fits in 8 bits, so you can fit all three into a uint32_t and save them under one NVS key.
 {
@@ -103,11 +84,7 @@ static esp_err_t save_rgb(uint32_t packed_rgb)  //Packed means putting three sep
     return err;
 }
 
-
-
-
 esp_err_t light_driver_init(light_driver_config_t *config) {
-
 
   if (config == NULL) {
       return ESP_ERR_INVALID_ARG;
@@ -120,65 +97,50 @@ esp_err_t light_driver_init(light_driver_config_t *config) {
   }
 
 
-    ret = iot_led_init(LEDC_TIMER_0, LEDC_LOW_SPEED_MODE, config->freq_hz, config->clk_cfg, config->duty_resolution); //ret defined here
+  ret = iot_led_init(LEDC_TIMER_0, LEDC_LOW_SPEED_MODE, config->freq_hz, config->clk_cfg, config->duty_resolution);
 
-    if (ret != ESP_OK) {
-       return ret;
-   }
+  if (ret != ESP_OK) {
+     return ret;
+ }
 
-    ret = iot_led_regist_channel(CHANNEL_ID_RED, config->gpio_red,LEDC_LOW_SPEED_MODE, LEDC_TIMER_0); //just reuse ret
+  ret = iot_led_regist_channel(CHANNEL_ID_RED, config->gpio_red,LEDC_LOW_SPEED_MODE, LEDC_TIMER_0);
 
-    if (ret != ESP_OK) {
-        return ret;
-    }
-
-
-    ret = iot_led_regist_channel(CHANNEL_ID_GREEN, config->gpio_green,LEDC_LOW_SPEED_MODE, LEDC_TIMER_0); //just reuse ret
-
-    if (ret != ESP_OK) {
-        return ret;
-    }
+  if (ret != ESP_OK) {
+      return ret;
+  }
 
 
-    return iot_led_regist_channel(CHANNEL_ID_BLUE, config->gpio_blue, LEDC_LOW_SPEED_MODE, LEDC_TIMER_0); //The final return handles both outcomes. If blue succeeds, the function returns ESP_OK. If blue fails, it passes that error back to the caller.
+  ret = iot_led_regist_channel(CHANNEL_ID_GREEN, config->gpio_green,LEDC_LOW_SPEED_MODE, LEDC_TIMER_0); //just reuse ret
+
+  if (ret != ESP_OK) {
+      return ret;
+  }
+
+
+  return iot_led_regist_channel(CHANNEL_ID_BLUE, config->gpio_blue, LEDC_LOW_SPEED_MODE, LEDC_TIMER_0); //The final return handles both outcomes. If blue succeeds, the function returns ESP_OK. If blue fails, it passes that error back to the caller.
 
 }
-
-
-
-
-
-
-
-
 
 
 esp_err_t light_driver_update_rgb(uint8_t new_red, uint8_t new_green, uint8_t new_blue) //use this to chaneg light colour when program is running
     {
 
+    uint32_t packed_rgb = ((uint32_t)new_red   << 24) | ((uint32_t)new_green << 16) | ((uint32_t)new_blue  <<  8);  //pack new colour values for saving
 
-
-    //pack values for saving
-    uint32_t packed_rgb = ((uint32_t)new_red   << 24) | ((uint32_t)new_green << 16) | ((uint32_t)new_blue  <<  8);  //see paper notes explanation
-
-    //don't want to change to the new colour if it cant be saved
+    //don't want to change to the new colour if it can't be saved
     //save to flash
     esp_err_t err = save_rgb(packed_rgb);
     if (err != ESP_OK) {
-        ESP_LOGI(TAG, "light_driver_update_rgb save failed");
-        return err;
-    } //If saving fails, return the error and keep the previous colour in RAM and on the LED.
 
-    //update current light colour
-    //grab new values from function arg
+        return err; //If saving fails, return the error and keep the previous colour in RAM and on the LED.
+    }
 
-    light_state.user_colour.red_value = new_red;  //issue - these colours are not being passed to light_driver_set_switch
+    //now the new colour is saved we can update current light colour
+    light_state.user_colour.red_value = new_red;
     light_state.user_colour.green_value = new_green;
     light_state.user_colour.blue_value = new_blue;
 
     // update the LED hardware
-
-
     if (light_state.light_is_on) {
       return light_driver_set_switch(true);
     }
@@ -187,12 +149,8 @@ esp_err_t light_driver_update_rgb(uint8_t new_red, uint8_t new_green, uint8_t ne
 
     }
 
-
-
-
-
 //this function just uses the hardcoded colour
-//a seperate function is called at stattup (and whenever needed) to get a saved colour
+//a seperate function is called at startup (and whenever needed) to get a saved colour
 esp_err_t light_driver_set_switch(bool on)
 {
     uint8_t channel_1_rgb;
@@ -207,22 +165,9 @@ esp_err_t light_driver_set_switch(bool on)
 
     case true:
 
-        //the issue (in the event this func is called by light_driver_update_rgb)is you are just grabbing the hardcoded colours not the new colours the user has set
-
-
-        channel_1_rgb = light_state.user_colour.red_value;  //these may have been changed via nvs by a previous light_driver_update_rgb call
+        channel_1_rgb = light_state.user_colour.red_value;
         channel_2_rgb = light_state.user_colour.green_value;
         channel_3_rgb = light_state.user_colour.blue_value;
-
-        ESP_LOGI(TAG, "current light state colour: red=%u green=%u blue=%u",
-         (unsigned)light_state.user_colour.red_value,
-         (unsigned)light_state.user_colour.green_value,
-         (unsigned)light_state.user_colour.blue_value);
-
-
-
-
-
         break;
     }
 
@@ -246,8 +191,7 @@ esp_err_t light_driver_set_switch(bool on)
         return ret;
     }
 
-
-    light_state.light_is_on = on; //now we can use method which updates colour while running
+    light_state.light_is_on = on; //now we are permitted to call light_driver_update_rgb which updates colour while running
 
     return ESP_OK;
 }
